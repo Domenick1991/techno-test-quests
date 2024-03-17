@@ -24,7 +24,7 @@ func MustLoad() *Config {
 	if err != nil {
 		log.Fatalf("get current path error: %s", err)
 	}
-	configPath := currentPath + `\OnlineCinema\config\config.yml`
+	configPath := currentPath + `\quests\config\config.yml`
 
 	//Проверяем существует ли файл
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {

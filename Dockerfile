@@ -3,7 +3,7 @@ WORKDIR /app
 COPY go.* ./
 RUN go mod download
 COPY . ./
-RUN GOOS=linux GOARCH=amd64 go build -o app ./OnlineCinema
+RUN GOOS=linux GOARCH=amd64 go build -o app ./quests
 
 FROM alpine:3.19 as app
 RUN apk --no-cache upgrade && apk --no-cache add ca-certificates

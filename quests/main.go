@@ -4,17 +4,17 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/swaggo/http-swagger"
 	"net/http"
-	"techno-test_Films/OnlineCinema/config"
-	_ "techno-test_Films/OnlineCinema/docs"
-	"techno-test_Films/OnlineCinema/handlers/actor"
-	"techno-test_Films/OnlineCinema/handlers/auth"
-	"techno-test_Films/OnlineCinema/handlers/film"
-	"techno-test_Films/OnlineCinema/handlers/user"
-	slogpretty "techno-test_Films/OnlineCinema/lib"
-	storage2 "techno-test_Films/OnlineCinema/storage"
+	"techno-test_quests/quests/config"
+	"techno-test_quests/quests/handlers/quest"
+
+	_ "techno-test_quests/quests/docs"
+	"techno-test_quests/quests/handlers/auth"
+	users "techno-test_quests/quests/handlers/user"
+	slogpretty "techno-test_quests/quests/lib"
+	storage2 "techno-test_quests/quests/storage"
 )
 
-// @title Фильмотека API
+// @title Задания пользователей API
 // @version 1.0
 // @description Фильмотека
 // @host localhost:8080
@@ -49,14 +49,12 @@ func main() {
 	mux.HandleFunc("/GetAllUsers", auth.AdminAuth(users.GetAllUsers(db), db))
 	mux.HandleFunc("/CreateUser", auth.AdminAuth(users.CreateUser(db), db))
 	mux.HandleFunc("/DeleteUser", auth.AdminAuth(users.DeleteUser(db), db))
-	mux.HandleFunc("/CreateActor", auth.AdminAuth(actor.CreateActor(db), db))
-	mux.HandleFunc("/UpdateActor", auth.AdminAuth(actor.UpdateActor(db), db))
-	mux.HandleFunc("/CreateFilm", auth.AdminAuth(film.GetFilms(db), db))
-	mux.HandleFunc("/UpdateFilm", auth.AdminAuth(film.UpdateFilm(db), db))
-	mux.HandleFunc("/GetActors", auth.UserAuth(actor.GetActors(db), db))
-	mux.HandleFunc("/DeleteFilm", auth.AdminAuth(film.DeleteFilm(db), db))
-	mux.HandleFunc("/DeleteActor", auth.AdminAuth(actor.DeleteActor(db), db))
-	mux.HandleFunc("/GetFilms", auth.UserAuth(film.GetFilms(db), db))
+	mux.HandleFunc("/CreateQuest", auth.AdminAuth(quest.CreateQuest(db, logger), db))
+	mux.HandleFunc("/CreateQuestSteps", auth.AdminAuth(quest.CreateQuestSteps(db, logger), db))
+	mux.HandleFunc("/CompleteSteps", auth.AdminAuth(quest.CompleteSteps(db, logger), db))
+	mux.HandleFunc("/UpdateQuestSteps", auth.AdminAuth(quest.UpdateQuestSteps(db, logger), db))
+	mux.HandleFunc("/GetHistory", auth.AdminAuth(quest.GetHistory(db, logger), db))
+
 	//запуск сервера
 	server := &http.Server{
 		Addr:         cfg.HttpServer.Address,

@@ -2,23 +2,23 @@ version: "3.9"
 
 services:
   db:
-    container_name: postgres_OnlineCinema
+    container_name: postgres_quests
     image: postgres:16.2-alpine3.19
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: "adminPG"
       POSTGRES_PASSWORD: "1Qwerty2$"
-      POSTGRES_DB: "OnlineCinema"
+      POSTGRES_DB: "quests"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - postgres
   pgadmin:
-    container_name: pgadmin_OnlineCinema
+    container_name: postgres_pgadmin
     image: dpage/pgadmin4:7.2
     environment:
-      PGADMIN_DEFAULT_EMAIL: "pgadmin@OnlineCinema.com"
+      PGADMIN_DEFAULT_EMAIL: "pgadmin@quests.com"
       PGADMIN_DEFAULT_PASSWORD: "1Qwerty2$"
       PGADMIN_CONFIG_SERVER_MODE: "False"
     volumes:

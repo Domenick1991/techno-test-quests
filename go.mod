@@ -1,4 +1,4 @@
-module techno-test_Films
+module techno-test_quests
 
 go 1.22
 

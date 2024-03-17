@@ -5,7 +5,7 @@ import (
 	"fmt"
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"net/http"
-	storages "techno-test_Films/OnlineCinema/storage"
+	storages "techno-test_quests/quests/storage"
 )
 
 // User model info

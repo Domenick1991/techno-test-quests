@@ -1,0 +1,181 @@
+definitions:
+  storage.NewQuest:
+    description: NewQuest json для создания задания с шагами
+    properties:
+      Cost:
+        description: Стоимость задания
+        type: integer
+      Name:
+        description: Имя задания
+        type: string
+      id:
+        description: идентификатор задания
+        type: integer
+      steps:
+        description: Шаги задания
+        items:
+          $ref: '#/definitions/storage.NewQuestStep'
+        type: array
+    type: object
+  storage.NewQuestStep:
+    description: NewQuestStep json для создания шага задания
+    properties:
+      Bonus:
+        description: Бонус за задание
+        type: integer
+      IsMulti:
+        description: Признак того, что шаг можно выполнять несколько раз
+        type: boolean
+      QuestId:
+        description: идентификатор задания. При создании методом CreateQuest, значение
+          будет проигнорировано, т.к. будет подставлятся идентификатор создоваемого
+          задания
+        type: integer
+      StepName:
+        description: Описание шага
+        type: string
+      id:
+        description: идентификатор задания
+        type: integer
+    type: object
+  storage.NewQuestSteps:
+    description: NewQuestStep json для создания шага задания
+    properties:
+      QuestSteps:
+        description: идентификатор задания
+        items:
+          $ref: '#/definitions/storage.NewQuestStep'
+        type: array
+    type: object
+  users.DeleteUserStruct:
+    properties:
+      id:
+        type: integer
+    type: object
+  users.User:
+    description: User информация о пользователе
+    properties:
+      id:
+        description: идентификатор пользователя
+        type: integer
+      password:
+        description: пароль пользователя
+        type: string
+      userIsAdmin:
+        description: признак того, что пользователь является администратором
+        type: boolean
+      username:
+        description: имя пользователя
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Фильмотека
+  title: Задания пользователей API
+  version: "1.0"
+paths:
+  /CreateQuest:
+    post:
+      consumes:
+      - application/json
+      description: Создает новое задание
+      operationId: CreateQuest
+      parameters:
+      - description: информация о задании
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/storage.NewQuest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.NewQuest'
+      security:
+      - BasicAuth: []
+      summary: Добавить задание
+      tags:
+      - quests
+  /CreateQuestSteps:
+    post:
+      consumes:
+      - application/json
+      description: Создает новое задание
+      operationId: CreateQuestSteps
+      parameters:
+      - description: информация о шагах задания
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/storage.NewQuestSteps'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.NewQuestStep'
+      security:
+      - BasicAuth: []
+      summary: Добавить задание
+      tags:
+      - quests
+  /CreateUser:
+    post:
+      consumes:
+      - application/json
+      description: Создает нового пользователя приложения
+      operationId: CreateUser
+      parameters:
+      - description: Информация о пользователе
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/users.User'
+      responses: {}
+      security:
+      - BasicAuth: []
+      summary: Создать пользователя
+      tags:
+      - user
+  /DeleteUser:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет пользователя приложения
+      operationId: DeleteUser
+      parameters:
+      - description: Идентификатор пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/users.DeleteUserStruct'
+      responses: {}
+      security:
+      - BasicAuth: []
+      summary: Удалить пользователя
+      tags:
+      - user
+  /GetAllUsers:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает всех пользователей приложения
+      operationId: GetAllUsers
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      security:
+      - BasicAuth: []
+      summary: получить пользователей
+      tags:
+      - user
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

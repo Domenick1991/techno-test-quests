@@ -2,8 +2,8 @@ package auth
 
 import (
 	"net/http"
-	users "techno-test_Films/OnlineCinema/handlers/user"
-	"techno-test_Films/OnlineCinema/storage"
+	users "techno-test_quests/quests/handlers/user"
+	"techno-test_quests/quests/storage"
 )
 
 // NonPage handler для пустой страницы
@@ -15,7 +15,7 @@ func NonPage(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Страница не существует"))
 }
 
-// @Security BasicAuth
+// AdminAuth Авторизация администратора
 func AdminAuth(next http.HandlerFunc, storage *storage.Storage) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()
@@ -34,7 +34,7 @@ func AdminAuth(next http.HandlerFunc, storage *storage.Storage) http.HandlerFunc
 	})
 }
 
-// @Security BasicAuth
+// UserAuth Авторизация любого пользователя
 func UserAuth(next http.HandlerFunc, storage *storage.Storage) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()

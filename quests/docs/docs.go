@@ -15,30 +15,30 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/CreateActor": {
+        "/CreateQuest": {
             "post": {
                 "security": [
                     {
                         "BasicAuth": []
                     }
                 ],
-                "description": "Функция добавляет нового актёра",
+                "description": "Создает новое задание",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
-                    "actors"
+                    "quests"
                 ],
-                "summary": "Добавить актёра",
-                "operationId": "CreateActor",
+                "summary": "Добавить задание",
+                "operationId": "CreateQuest",
                 "parameters": [
                     {
-                        "description": "Информация об актёре",
+                        "description": "информация о задании",
                         "name": "input",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/storage.Actor"
+                            "$ref": "#/definitions/storage.NewQuest"
                         }
                     }
                 ],
@@ -46,10 +46,44 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/storage.OutActor"
-                            }
+                            "$ref": "#/definitions/storage.NewQuest"
+                        }
+                    }
+                }
+            }
+        },
+        "/CreateQuestSteps": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Создает новое задание",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quests"
+                ],
+                "summary": "Добавить задание",
+                "operationId": "CreateQuestSteps",
+                "parameters": [
+                    {
+                        "description": "информация о шагах задания",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/storage.NewQuestSteps"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/storage.NewQuestStep"
                         }
                     }
                 }
@@ -85,46 +119,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/DeleteActor": {
-            "delete": {
-                "security": [
-                    {
-                        "BasicAuth": []
-                    }
-                ],
-                "description": "Удаляет актёра",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "actors"
-                ],
-                "summary": "Удалить актёра",
-                "operationId": "DeleteActor",
-                "parameters": [
-                    {
-                        "description": "Информация об актёре",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/storage.Actor"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/storage.OutActor"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/DeleteUser": {
             "delete": {
                 "security": [
@@ -155,35 +149,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/GetActors": {
-            "get": {
-                "security": [
-                    {
-                        "BasicAuth": []
-                    }
-                ],
-                "description": "Возвращает всех актёров фильмотеки",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "actors"
-                ],
-                "summary": "Показать актёров",
-                "operationId": "GetActors",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/storage.OutActor"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/GetAllUsers": {
             "get": {
                 "security": [
@@ -209,130 +174,70 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/UpdateActor": {
-            "post": {
-                "security": [
-                    {
-                        "BasicAuth": []
-                    }
-                ],
-                "description": "обновляет данные об актере",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "actors"
-                ],
-                "summary": "Изменить актёра",
-                "operationId": "UpdateActor",
-                "parameters": [
-                    {
-                        "description": "Информация об актёре",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/storage.Actor"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/storage.OutActor"
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "storage.Actor": {
+        "storage.NewQuest": {
+            "description": "NewQuest json для создания задания с шагами",
             "type": "object",
             "properties": {
-                "DeleteFilms": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "Cost": {
+                    "description": "Стоимость задания",
+                    "type": "integer"
                 },
-                "actorname": {
-                    "type": "string"
-                },
-                "addfilms": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "birthdate": {
+                "Name": {
+                    "description": "Имя задания",
                     "type": "string"
                 },
                 "id": {
+                    "description": "идентификатор задания",
                     "type": "integer"
                 },
-                "sex": {
-                    "type": "string"
+                "steps": {
+                    "description": "Шаги задания",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storage.NewQuestStep"
+                    }
                 }
             }
         },
-        "storage.Film": {
+        "storage.NewQuestStep": {
+            "description": "NewQuestStep json для создания шага задания",
             "type": "object",
             "properties": {
-                "addActors": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "Bonus": {
+                    "description": "Бонус за задание",
+                    "type": "integer"
                 },
-                "deleteActors": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "IsMulti": {
+                    "description": "Признак того, что шаг можно выполнять несколько раз",
+                    "type": "boolean"
                 },
-                "description": {
-                    "type": "string"
+                "QuestId": {
+                    "description": "идентификатор задания. При создании методом CreateQuest, значение будет проигнорировано, т.к. будет подставлятся идентификатор создоваемого задания",
+                    "type": "integer"
                 },
-                "filmname": {
+                "StepName": {
+                    "description": "Описание шага",
                     "type": "string"
                 },
                 "id": {
+                    "description": "идентификатор задания",
                     "type": "integer"
-                },
-                "rating": {
-                    "type": "string"
-                },
-                "releasedate": {
-                    "type": "string"
                 }
             }
         },
-        "storage.OutActor": {
+        "storage.NewQuestSteps": {
+            "description": "NewQuestStep json для создания шага задания",
             "type": "object",
             "properties": {
-                "actorname": {
-                    "type": "string"
-                },
-                "birthdate": {
-                    "type": "string"
-                },
-                "films": {
+                "QuestSteps": {
+                    "description": "идентификатор задания",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/storage.Film"
+                        "$ref": "#/definitions/storage.NewQuestStep"
                     }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "sex": {
-                    "type": "string"
                 }
             }
         },
@@ -380,7 +285,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Фильмотека API",
+	Title:            "Задания пользователей API",
 	Description:      "Фильмотека",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
