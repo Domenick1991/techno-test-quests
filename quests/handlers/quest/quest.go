@@ -11,6 +11,62 @@ import (
 	storages "techno-test_quests/quests/storage"
 )
 
+// Quests model info
+// @Description Quests json информация о заданиях и их шагов
+type Quests struct {
+	Id        string  `json:"Id" db:"id"`               //ИД задания
+	QuestName string  `json:"QuestName" db:"questname"` //Имя выполненного задания пользователем
+	Steps     []Steps `json:"Steps" db:"-`              //Шаги задания
+}
+
+func (quest *Quests) TableName() string {
+	return "quests"
+}
+
+type Steps struct {
+	StepName string `json:"StepName" db:"stepname"` //Имя шага
+	Id       int    `json:"Id" db:"id"`             //ИД шага
+	Bonus    int    `json:"Bonus" db:"bonus"`       //Бонус за выполнение шага
+	IsMulti  bool   `json:"isMulti" db:"ismulti"`   //Признак того, что шаг можно выполнять повторно
+}
+
+// @Summary Обновить шаг к заданию
+// @Tags quests
+// @Description Создает новое задание
+// @id GetQuests
+// @Accept json
+// @Procedure json
+// @router /GetQuests [GET]
+// @Success 200 {object} Quests
+// @Security BasicAuth
+func GetQuests(storage *storages.Storage, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		storages.RequestTolog(r, logger)
+		if r.Method == http.MethodGet {
+
+			var quests []Quests
+			err := storage.DB.Select().From("quests").All(&quests)
+			if err != nil {
+				storages.HttpResponse(w, http.StatusInternalServerError, "Ошибка при получении данных о заданиях")
+				return
+			}
+			for i, quest := range quests {
+				var steps []Steps
+				err = storage.DB.Select().From("queststeps").Where(dbx.HashExp{"questid": quest.Id}).All(&steps)
+				if err != nil {
+					storages.HttpResponse(w, http.StatusInternalServerError, "Ошибка при получении данных о заданиях")
+					return
+				}
+				quests[i].Steps = steps
+			}
+			result, _ := json.MarshalIndent(quests, "", "\t")
+			storages.HttpResponseObject(w, http.StatusInternalServerError, result)
+		} else {
+			storages.HttpResponse(w, http.StatusMethodNotAllowed, "Метод не поддерживается, используйте метод POST")
+		}
+	}
+}
+
 // @Summary Добавить задание
 // @Tags quests
 // @Description Создает новое задание
@@ -146,73 +202,6 @@ func CreateQuestSteps(storage *storages.Storage, logger *slog.Logger) http.Handl
 	}
 }
 
-// @Summary Выполнить шаг
-// @Tags quests
-// @Description Устанавливает признак выполнения шага у пользователя
-// @id CompleteSteps
-// @Accept json
-// @Procedure json
-// @router /CompleteSteps [POST]
-// @param input body storage.NewQuestSteps true "обновленная информация о шагах задания"
-// @Success 200 {object} storage.NewQuestStep
-// @Security BasicAuth
-func CompleteSteps(storage *storages.Storage, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		storages.RequestTolog(r, logger)
-		if r.Method == http.MethodPost {
-			var сompleteSteps storages.NewCompleteSteps
-			decoder := json.NewDecoder(r.Body)
-			err := decoder.Decode(&сompleteSteps)
-
-			if err != nil {
-				storages.HttpResponse(w, http.StatusBadRequest, "Неверный формат запроса "+err.Error())
-				return
-			}
-
-			for _, сompleteStep := range сompleteSteps.CompleteSteps {
-				сompleteStepDB, errlist := сompleteStep.ConvertToDB()
-				if len(errlist) > 0 {
-					result, _ := json.MarshalIndent(errlist, "", "\t")
-					storages.HttpResponseObject(w, http.StatusInternalServerError, result)
-					return
-				}
-
-				//Если задание можно выполнить - выполняем, если нет, то просто игнорируем
-				if checkCompliteStep(storage, сompleteStep) {
-					err = storage.DB.Model(&сompleteStepDB).Insert()
-					if err != nil {
-						storages.HttpResponse(w, http.StatusBadRequest, "Не удалось выполнить задание"+err.Error())
-						return
-					}
-				}
-			}
-			storages.HttpResponse(w, http.StatusOK, "Успешно")
-		} else {
-			storages.HttpResponse(w, http.StatusMethodNotAllowed, "Метод не поддерживается, используйте метод POST")
-		}
-	}
-}
-
-// checkCompliteStep возвращает true, если шаг доступен пользователю для выполнения
-func checkCompliteStep(storage *storages.Storage, сompleteStep storages.CompleteStep) bool {
-	//Получаем id всех выполненных заданий
-
-	queryText := "SELECT s.id FROM public.queststeps as s where (s.ismulti = false and s.id not in (select h.stepid from history h where h.userid = " + strconv.Itoa(сompleteStep.Userid) + " )) or s.ismulti = true"
-	query := storage.DB.NewQuery(queryText)
-	rows, err := query.Rows()
-	if err != nil {
-
-	}
-	var stepIds map[int]bool = make(map[int]bool)
-	for rows.Next() {
-		var id int
-		rows.Scan(&id)
-		stepIds[id] = true
-	}
-	_, inMap := stepIds[сompleteStep.Stepid]
-	return inMap
-}
-
 // @Summary Обновить шаг к заданию
 // @Tags quests
 // @Description Создает новое задание
@@ -257,102 +246,4 @@ func UpdateQuestSteps(storage *storages.Storage, logger *slog.Logger) http.Handl
 			storages.HttpResponse(w, http.StatusMethodNotAllowed, "Метод не поддерживается, используйте метод POST")
 		}
 	}
-}
-
-// @Summary Обновить шаг к заданию
-// @Tags quests
-// @Description Создает новое задание
-// @id GetHistory
-// @Accept json
-// @Procedure json
-// @router /GetHistory [POST]
-// @param input body storage.NewQuestSteps true "обновленная информация о шагах задания"
-// @Success 200 {object} storage.UserBonus
-// @Security BasicAuth
-func GetHistory(storage *storages.Storage, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		storages.RequestTolog(r, logger)
-		if r.Method == http.MethodGet {
-			userId := r.Header.Get("userid")
-			if userId != "" {
-				questIds := getCompletedQuestId(storage, userId)
-				if len(questIds) > 0 {
-					userBonus := storages.UserBonus{}
-
-					for _, questId := range questIds {
-						CompletedQuest := GetCompletedQuestForUser(storage, userId, questId)
-						userBonus.CompletedQuests = append(userBonus.CompletedQuests, CompletedQuest)
-						userBonus.TotalBonus += CompletedQuest.Bonus
-					}
-					result, _ := json.MarshalIndent(userBonus, "", "\t")
-					storages.HttpResponseObject(w, http.StatusInternalServerError, result)
-				} else {
-					storages.HttpResponse(w, http.StatusOK, "Пользователь еще не выполнял задания")
-				}
-			} else {
-				storages.HttpResponse(w, http.StatusBadRequest, "Неверный формат запроса, укажите 'userid")
-				return
-			}
-
-		} else {
-			storages.HttpResponse(w, http.StatusMethodNotAllowed, "Метод не поддерживается, используйте метод POST")
-		}
-	}
-}
-
-// getCompletedQuestId возвращает ИД заданий в которых участвовал пользователь
-func getCompletedQuestId(storage *storages.Storage, userId string) []string {
-	var questIds []string
-
-	queryText := `SELECT distinct q.id
-						FROM public.queststeps as s
-						left join history as h on s.id = h.stepid
-						left join quests as q on s.questid = q.id
-						where h.userid = ` + userId
-	query := storage.DB.NewQuery(queryText)
-	rows, err := query.Rows()
-	if err != nil {
-		return questIds
-	}
-
-	for rows.Next() {
-		var id string
-		rows.Scan(&id)
-		questIds = append(questIds, id)
-	}
-	return questIds
-}
-
-// GetCompletedQuestForUser Возвращает информацию по заданию для пользователя
-func GetCompletedQuestForUser(storage *storages.Storage, userId, questId string) storages.UserCompletedQuest {
-	UserCompletedQuest := storages.UserCompletedQuest{}
-
-	UserCompletedQuest.QuestId = questId
-	//TODO UserCompletedQuest.QuestName
-
-	//Всего заданий
-	queryText := `	SELECT count(*)
-					FROM public.queststeps
-					where questid = ` + questId
-	UserCompletedQuest.AllStepsCount = storages.ExicuteCountSumQuery(storage, queryText)
-
-	//Всего заданий выполненных пользователей
-	queryText = `SELECT count(*)
-					FROM public.queststeps as s
-					left join history as h on s.id = h.stepid
-					left join quests as q on s.questid = q.id
-					where h.userid = ` + userId + ` and q.id = ` + questId
-	UserCompletedQuest.CompletedStepsCount = storages.ExicuteCountSumQuery(storage, queryText)
-
-	//Сумма бонуса за выполненные шаги задания
-	queryText = `SELECT Sum(s.bonus)
-					FROM public.queststeps as s
-					left join history as h on s.id = h.stepid
-					left join quests as q on s.questid = q.id
-					where h.userid = ` + userId + ` and q.id = ` + questId
-	UserCompletedQuest.Bonus = storages.ExicuteCountSumQuery(storage, queryText)
-
-	//TODO UserCompletedQuest.CompletedSteps берем как сумму из CompletedStepsCount ?
-
-	return UserCompletedQuest
 }

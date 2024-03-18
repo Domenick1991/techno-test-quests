@@ -5,6 +5,7 @@ import (
 	"github.com/swaggo/http-swagger"
 	"net/http"
 	"techno-test_quests/quests/config"
+	"techno-test_quests/quests/handlers/history"
 	"techno-test_quests/quests/handlers/quest"
 
 	_ "techno-test_quests/quests/docs"
@@ -51,9 +52,10 @@ func main() {
 	mux.HandleFunc("/DeleteUser", auth.AdminAuth(users.DeleteUser(db), db))
 	mux.HandleFunc("/CreateQuest", auth.AdminAuth(quest.CreateQuest(db, logger), db))
 	mux.HandleFunc("/CreateQuestSteps", auth.AdminAuth(quest.CreateQuestSteps(db, logger), db))
-	mux.HandleFunc("/CompleteSteps", auth.AdminAuth(quest.CompleteSteps(db, logger), db))
+	mux.HandleFunc("/CompleteSteps", auth.AdminAuth(history.CompleteSteps(db, logger), db))
 	mux.HandleFunc("/UpdateQuestSteps", auth.AdminAuth(quest.UpdateQuestSteps(db, logger), db))
-	mux.HandleFunc("/GetHistory", auth.AdminAuth(quest.GetHistory(db, logger), db))
+	mux.HandleFunc("/GetHistory", auth.AdminAuth(history.GetHistory(db, logger), db))
+	mux.HandleFunc("/GetQuests", auth.AdminAuth(quest.GetQuests(db, logger), db))
 
 	//запуск сервера
 	server := &http.Server{

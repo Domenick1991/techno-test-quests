@@ -8,6 +8,43 @@
     },
     "host": "localhost:8080",
     "paths": {
+        "/CompleteSteps": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Устанавливает признак выполнения шага у пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "history"
+                ],
+                "summary": "Выполнить шаг",
+                "operationId": "CompleteSteps",
+                "parameters": [
+                    {
+                        "description": "обновленная информация о шагах задания",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/storage.NewQuestSteps"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/storage.NewQuestStep"
+                        }
+                    }
+                }
+            }
+        },
         "/CreateQuest": {
             "post": {
                 "security": [
@@ -52,14 +89,14 @@
                         "BasicAuth": []
                     }
                 ],
-                "description": "Создает новое задание",
+                "description": "Добавляет новые шаги к заданию",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
                     "quests"
                 ],
-                "summary": "Добавить задание",
+                "summary": "Добавить шаг к заданию",
                 "operationId": "CreateQuestSteps",
                 "parameters": [
                     {
@@ -167,36 +204,228 @@
                     }
                 }
             }
+        },
+        "/GetHistory": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Создает новое задание",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "history"
+                ],
+                "summary": "Обновить шаг к заданию",
+                "operationId": "GetHistory",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/history.UserBonus"
+                        }
+                    }
+                }
+            }
+        },
+        "/GetQuests": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Создает новое задание",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quests"
+                ],
+                "summary": "Обновить шаг к заданию",
+                "operationId": "GetQuests",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/quest.Quests"
+                        }
+                    }
+                }
+            }
+        },
+        "/UpdateQuestSteps": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Создает новое задание",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quests"
+                ],
+                "summary": "Обновить шаг к заданию",
+                "operationId": "UpdateQuestSteps",
+                "parameters": [
+                    {
+                        "description": "обновленная информация о шагах задания",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/storage.NewQuestSteps"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/storage.NewQuestStep"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "history.UserBonus": {
+            "description": "UserBonus json для получения история выполнения заданий и их шагов",
+            "type": "object",
+            "properties": {
+                "ComplitedQuests": {
+                    "description": "Список заданий в которых участвовал пользователь",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/history.UserCompletedQuest"
+                    }
+                },
+                "TotalBonus": {
+                    "description": "Общий бонусный счет пользователя",
+                    "type": "integer"
+                }
+            }
+        },
+        "history.UserCompletedQuest": {
+            "type": "object",
+            "properties": {
+                "AllStepsCount": {
+                    "description": "Кол-во шагов, доступное в задании",
+                    "type": "integer"
+                },
+                "Bonus": {
+                    "description": "Сумма Бонусов за выполненные задания",
+                    "type": "integer"
+                },
+                "CompletedSteps": {
+                    "description": "Выполненные шаги пользователем",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/history.UserCompletedSteps"
+                    }
+                },
+                "CompletedStepsCount": {
+                    "description": "Кол-во выполненных шагов заданий пользователем",
+                    "type": "integer"
+                },
+                "QuestId": {
+                    "description": "ИД задания",
+                    "type": "string"
+                },
+                "QuestName": {
+                    "description": "Имя выполненного задания пользователем",
+                    "type": "string"
+                }
+            }
+        },
+        "history.UserCompletedSteps": {
+            "type": "object",
+            "properties": {
+                "Count": {
+                    "description": "Кол-во выполнений шага",
+                    "type": "integer"
+                },
+                "StepName": {
+                    "description": "Имя выполненного шага",
+                    "type": "string"
+                },
+                "UserBonusStep": {
+                    "description": "Бонус пользователя за выполнение шага",
+                    "type": "integer"
+                }
+            }
+        },
+        "quest.Quests": {
+            "description": "Quests json информация о заданиях и их шагов",
+            "type": "object",
+            "properties": {
+                "Id": {
+                    "description": "ИД задания",
+                    "type": "string"
+                },
+                "QuestName": {
+                    "description": "Имя выполненного задания пользователем",
+                    "type": "string"
+                },
+                "Steps": {
+                    "description": "Шаги задания",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/quest.Steps"
+                    }
+                }
+            }
+        },
+        "quest.Steps": {
+            "type": "object",
+            "properties": {
+                "Bonus": {
+                    "description": "Бонус за выполнение шага",
+                    "type": "integer"
+                },
+                "Id": {
+                    "description": "ИД шага",
+                    "type": "integer"
+                },
+                "StepName": {
+                    "description": "Имя шага",
+                    "type": "string"
+                },
+                "isMulti": {
+                    "description": "Признак того, что шаг можно выполнять повторно",
+                    "type": "boolean"
+                }
+            }
+        },
         "storage.NewQuest": {
             "description": "NewQuest json для создания задания с шагами",
             "type": "object",
             "properties": {
-                "Cost": {
-                    "description": "Стоимость задания",
-                    "type": "integer"
-                },
                 "Name": {
                     "description": "Имя задания",
                     "type": "string"
                 },
-                "id": {
-                    "description": "идентификатор задания",
-                    "type": "integer"
-                },
-                "steps": {
+                "QuestSteps": {
                     "description": "Шаги задания",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/storage.NewQuestStep"
                     }
+                },
+                "id": {
+                    "description": "Идентификатор задания",
+                    "type": "integer"
                 }
             }
         },
         "storage.NewQuestStep": {
-            "description": "NewQuestStep json для создания шага задания",
             "type": "object",
             "properties": {
                 "Bonus": {
@@ -208,7 +437,7 @@
                     "type": "boolean"
                 },
                 "QuestId": {
-                    "description": "идентификатор задания. При создании методом CreateQuest, значение будет проигнорировано, т.к. будет подставлятся идентификатор создоваемого задания",
+                    "description": "Идентификатор задания. При создании методом CreateQuest, значение будет проигнорировано, т.к. будет подставляться идентификатор создаваемого задания",
                     "type": "integer"
                 },
                 "StepName": {
@@ -216,7 +445,7 @@
                     "type": "string"
                 },
                 "id": {
-                    "description": "идентификатор задания",
+                    "description": "Идентификатор задания",
                     "type": "integer"
                 }
             }
@@ -226,7 +455,7 @@
             "type": "object",
             "properties": {
                 "QuestSteps": {
-                    "description": "идентификатор задания",
+                    "description": "Идентификатор задания",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/storage.NewQuestStep"

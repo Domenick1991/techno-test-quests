@@ -1,24 +1,97 @@
 definitions:
+  history.UserBonus:
+    description: UserBonus json для получения история выполнения заданий и их шагов
+    properties:
+      ComplitedQuests:
+        description: Список заданий в которых участвовал пользователь
+        items:
+          $ref: '#/definitions/history.UserCompletedQuest'
+        type: array
+      TotalBonus:
+        description: Общий бонусный счет пользователя
+        type: integer
+    type: object
+  history.UserCompletedQuest:
+    properties:
+      AllStepsCount:
+        description: Кол-во шагов, доступное в задании
+        type: integer
+      Bonus:
+        description: Сумма Бонусов за выполненные задания
+        type: integer
+      CompletedSteps:
+        description: Выполненные шаги пользователем
+        items:
+          $ref: '#/definitions/history.UserCompletedSteps'
+        type: array
+      CompletedStepsCount:
+        description: Кол-во выполненных шагов заданий пользователем
+        type: integer
+      QuestId:
+        description: ИД задания
+        type: string
+      QuestName:
+        description: Имя выполненного задания пользователем
+        type: string
+    type: object
+  history.UserCompletedSteps:
+    properties:
+      Count:
+        description: Кол-во выполнений шага
+        type: integer
+      StepName:
+        description: Имя выполненного шага
+        type: string
+      UserBonusStep:
+        description: Бонус пользователя за выполнение шага
+        type: integer
+    type: object
+  quest.Quests:
+    description: Quests json информация о заданиях и их шагов
+    properties:
+      Id:
+        description: ИД задания
+        type: string
+      QuestName:
+        description: Имя выполненного задания пользователем
+        type: string
+      Steps:
+        description: Шаги задания
+        items:
+          $ref: '#/definitions/quest.Steps'
+        type: array
+    type: object
+  quest.Steps:
+    properties:
+      Bonus:
+        description: Бонус за выполнение шага
+        type: integer
+      Id:
+        description: ИД шага
+        type: integer
+      StepName:
+        description: Имя шага
+        type: string
+      isMulti:
+        description: Признак того, что шаг можно выполнять повторно
+        type: boolean
+    type: object
   storage.NewQuest:
     description: NewQuest json для создания задания с шагами
     properties:
-      Cost:
-        description: Стоимость задания
-        type: integer
       Name:
         description: Имя задания
         type: string
-      id:
-        description: идентификатор задания
-        type: integer
-      steps:
+      QuestSteps:
         description: Шаги задания
         items:
           $ref: '#/definitions/storage.NewQuestStep'
         type: array
+      id:
+        description: Идентификатор задания
+        type: integer
     type: object
   storage.NewQuestStep:
-    description: NewQuestStep json для создания шага задания
     properties:
       Bonus:
         description: Бонус за задание
@@ -27,22 +100,22 @@ definitions:
         description: Признак того, что шаг можно выполнять несколько раз
         type: boolean
       QuestId:
-        description: идентификатор задания. При создании методом CreateQuest, значение
-          будет проигнорировано, т.к. будет подставлятся идентификатор создоваемого
+        description: Идентификатор задания. При создании методом CreateQuest, значение
+          будет проигнорировано, т.к. будет подставляться идентификатор создаваемого
           задания
         type: integer
       StepName:
         description: Описание шага
         type: string
       id:
-        description: идентификатор задания
+        description: Идентификатор задания
         type: integer
     type: object
   storage.NewQuestSteps:
     description: NewQuestStep json для создания шага задания
     properties:
       QuestSteps:
-        description: идентификатор задания
+        description: Идентификатор задания
         items:
           $ref: '#/definitions/storage.NewQuestStep'
         type: array
@@ -75,6 +148,29 @@ info:
   title: Задания пользователей API
   version: "1.0"
 paths:
+  /CompleteSteps:
+    post:
+      consumes:
+      - application/json
+      description: Устанавливает признак выполнения шага у пользователя
+      operationId: CompleteSteps
+      parameters:
+      - description: обновленная информация о шагах задания
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/storage.NewQuestSteps'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.NewQuestStep'
+      security:
+      - BasicAuth: []
+      summary: Выполнить шаг
+      tags:
+      - history
   /CreateQuest:
     post:
       consumes:
@@ -102,7 +198,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Создает новое задание
+      description: Добавляет новые шаги к заданию
       operationId: CreateQuestSteps
       parameters:
       - description: информация о шагах задания
@@ -118,7 +214,7 @@ paths:
             $ref: '#/definitions/storage.NewQuestStep'
       security:
       - BasicAuth: []
-      summary: Добавить задание
+      summary: Добавить шаг к заданию
       tags:
       - quests
   /CreateUser:
@@ -175,6 +271,61 @@ paths:
       summary: получить пользователей
       tags:
       - user
+  /GetHistory:
+    get:
+      consumes:
+      - application/json
+      description: Создает новое задание
+      operationId: GetHistory
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/history.UserBonus'
+      security:
+      - BasicAuth: []
+      summary: Обновить шаг к заданию
+      tags:
+      - history
+  /GetQuests:
+    get:
+      consumes:
+      - application/json
+      description: Создает новое задание
+      operationId: GetQuests
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/quest.Quests'
+      security:
+      - BasicAuth: []
+      summary: Обновить шаг к заданию
+      tags:
+      - quests
+  /UpdateQuestSteps:
+    post:
+      consumes:
+      - application/json
+      description: Создает новое задание
+      operationId: UpdateQuestSteps
+      parameters:
+      - description: обновленная информация о шагах задания
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/storage.NewQuestSteps'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.NewQuestStep'
+      security:
+      - BasicAuth: []
+      summary: Обновить шаг к заданию
+      tags:
+      - quests
 securityDefinitions:
   BasicAuth:
     type: basic

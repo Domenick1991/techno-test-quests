@@ -14,8 +14,8 @@ type Storage struct {
 	DB *dbx.DB
 }
 
-// типы для выполнения шагов
-// region
+// region типы для выполнения шагов
+
 // NewCompleteSteps model info
 // @Description NewCompleteSteps  json для отметки о выполнении шага задания пользователем
 type NewCompleteSteps struct {
@@ -26,15 +26,6 @@ type CompleteStep struct {
 	//TODO вообще правильно ИД пользователя не передавать, а брать из авторизации, но тогда будет сложно тестировать, с учетом того, что это тестовое задание, то будем передавать
 	Stepid int `json:"stepid"` //Идентификатор шага
 	Userid int `json:"userid"` //Идентификатор пользователя выполневшего шаг
-}
-
-type CompleteStepDB struct {
-	Stepid int `json:"stepid"` //Идентификатор шага
-	Userid int `json:"userid"` //Идентификатор пользователя выполневшего шаг
-}
-
-func (quest *CompleteStepDB) TableName() string {
-	return "history"
 }
 
 func (complete *CompleteStep) ConvertToDB() (CompleteStepDB, []ErrorList) {
@@ -57,15 +48,43 @@ func (complete *CompleteStep) ConvertToDB() (CompleteStepDB, []ErrorList) {
 	}
 }
 
-//endregion
+type CompleteStepDB struct {
+	Stepid int `json:"stepid"` //Идентификатор шага
+	Userid int `json:"userid"` //Идентификатор пользователя выполневшего шаг
+}
+
+func (quest *CompleteStepDB) TableName() string {
+	return "history"
+}
+
+//endregion типы для выполнения шагов
+
+//region типы для создания новых заданий
 
 // NewQuest model info
 // @Description NewQuest json для создания задания с шагами
 type NewQuest struct {
-	Id         int            `json:"id"`         //идентификатор задания
+	Id         int            `json:"id"`         //Идентификатор задания
 	Name       string         `json:"Name"`       //Имя задания
-	Cost       int            `json:"Cost"`       //Стоимость задания
 	QuestSteps []NewQuestStep `json:"QuestSteps"` //Шаги задания
+}
+
+func (quest *NewQuest) ConvertToDB() (NewQuestDB, []ErrorList) {
+	var errlist []ErrorList
+
+	questdb := NewQuestDB{}
+	questdb.Id = quest.Id
+
+	if quest.Name == "" {
+		errlist = append(errlist, ErrorList{"Имя задания должно содержать от 1 до 200 символов"})
+	}
+	questdb.Name = quest.Name
+
+	if len(errlist) > 0 {
+		return questdb, errlist
+	} else {
+		return questdb, nil
+	}
 }
 
 type NewQuestDB struct {
@@ -78,27 +97,9 @@ func (quest *NewQuestDB) TableName() string {
 	return "quests"
 }
 
-func (quest *NewQuest) ConvertToDB() (NewQuestDB, []ErrorList) {
-	var errlist []ErrorList
+//endregion типы для создания новых заданий
 
-	questdb := NewQuestDB{}
-	questdb.Id = quest.Id
-
-	if quest.Name == "" {
-		errlist = append(errlist, ErrorList{"Имя задания должно содержать от 1 до 200 символов"})
-	}
-	if quest.Cost <= 0 {
-		errlist = append(errlist, ErrorList{"Cтоимость задания должна быть больше 0"})
-	}
-	questdb.Name = quest.Name
-	questdb.Cost = quest.Cost
-
-	if len(errlist) > 0 {
-		return questdb, errlist
-	} else {
-		return questdb, nil
-	}
-}
+//region типы для создания и обновления шагов заданий
 
 // NewQuestSteps model info
 // @Description NewQuestStep json для создания шага задания
@@ -114,6 +115,40 @@ type NewQuestStep struct {
 	IsMulti  *bool  `json:"IsMulti"`  //Признак того, что шаг можно выполнять несколько раз
 }
 
+func (questStep *NewQuestStep) ConvertToDB() (NewQuestStepDB, []ErrorList) {
+	var errlist []ErrorList
+
+	questStepDB := NewQuestStepDB{}
+	questStepDB.Id = questStep.Id
+
+	if questStep.StepName == "" {
+		errlist = append(errlist, ErrorList{"Не указано описание шага"})
+	}
+	if questStep.QuestId <= 0 {
+		errlist = append(errlist, ErrorList{"Не указан идентификатор задания, к которому относится шаг"})
+	}
+
+	if questStep.Bonus < 0 {
+		errlist = append(errlist, ErrorList{"Бонус не может быть меньше 0"})
+	}
+
+	if questStep.IsMulti == nil {
+		questStepDB.IsMulti = false
+	}
+
+	questStepDB.QuestId = questStep.QuestId
+	questStepDB.Bonus = questStep.Bonus
+	questStepDB.StepName = questStep.StepName
+
+	if len(errlist) > 0 {
+		return questStepDB, errlist
+	} else {
+		return questStepDB, nil
+	}
+}
+
+// UpdateQuestSteps model info
+// @Description UpdateQuestSteps json для обновления шагов заданий
 type UpdateQuestSteps struct {
 	QuestSteps []UpdateQuestStep `json:"QuestSteps"` //Идентификатор задания
 }
@@ -168,54 +203,15 @@ func (questStep *NewQuestStepDB) GetUpdatesData() map[string]interface{} {
 	return data
 }
 
-func (questStep *NewQuestStep) ConvertToDB() (NewQuestStepDB, []ErrorList) {
-	var errlist []ErrorList
-
-	questStepDB := NewQuestStepDB{}
-	questStepDB.Id = questStep.Id
-
-	if questStep.StepName == "" {
-		errlist = append(errlist, ErrorList{"Не указано описание шага"})
-	}
-	if questStep.QuestId <= 0 {
-		errlist = append(errlist, ErrorList{"Не указан идентификатор задания, к которому относится шаг"})
-	}
-
-	if questStep.Bonus < 0 {
-		errlist = append(errlist, ErrorList{"Бонус не может быть меньше 0"})
-	}
-
-	if questStep.IsMulti == nil {
-		questStepDB.IsMulti = false
-	}
-
-	questStepDB.QuestId = questStep.QuestId
-	questStepDB.Bonus = questStep.Bonus
-	questStepDB.StepName = questStep.StepName
-
-	if len(errlist) > 0 {
-		return questStepDB, errlist
-	} else {
-		return questStepDB, nil
-	}
-}
+//endregion типы для создания и обновления шагов заданий
 
 type ErrorList struct {
 	Error string
 }
 
-func HttpResponse(w http.ResponseWriter, status int, text string) {
-	w.WriteHeader(status)
-	result, _ := json.MarshalIndent(text, "", "\t")
-	w.Write([]byte(result))
-}
+//region инициализация
 
-func HttpResponseObject(w http.ResponseWriter, status int, text []byte) {
-	w.WriteHeader(status)
-	w.Write(text)
-}
-
-// New возвразает соединение с БД
+// New возвращает соединение с БД
 func New(storagePath string) (*Storage, error) {
 
 	db, err := dbx.MustOpen("postgres", storagePath)
@@ -226,7 +222,7 @@ func New(storagePath string) (*Storage, error) {
 	return &Storage{DB: db}, nil
 }
 
-// Init иницилизирует БД
+// Init инициализирует БД
 func (storage *Storage) Init() error {
 	//region Создаем таблицу Пользователей, индекс и пользователя администратора
 	queryText := `CREATE TABLE IF NOT EXISTS users (
@@ -306,6 +302,10 @@ func (storage *Storage) Init() error {
 	return nil
 }
 
+//endregion инициализация
+
+//region Системные методы
+
 // EncodePassword функция возвращает хэш для пароля
 func EncodePassword(password string) string {
 	// Для пэт проекта сделаем просто, добавим в конец к паролю @1 и сдвинем каждый символы на 1
@@ -342,37 +342,17 @@ func RequestTolog(r *http.Request, logger *slog.Logger) {
 	)
 }
 
-type UserBonus struct {
-	TotalBonus      int                  `json:"TotalBonus"`      //Общий бонусный счет пользователя
-	CompletedQuests []UserCompletedQuest `json:"ComplitedQuests"` //Список заданий в которых участвовал пользователь
+func HttpResponse(w http.ResponseWriter, status int, text string) {
+	w.WriteHeader(status)
+	result, _ := json.MarshalIndent(text, "", "\t")
+	w.Write([]byte(result))
 }
 
-type UserCompletedQuest struct {
-	QuestId             string               `json:"QuestId"`             //ИД задания
-	QuestName           string               `json:"QuestName"`           //Имя выполненного задания пользователем
-	Bonus               int                  `json:"Bonus"`               //Сумма Бонусов за выполненные задания
-	CompletedStepsCount int                  `json:"CompletedStepsCount"` //Кол-во выполненных шагов заданий пользователем
-	AllStepsCount       int                  `json:"AllStepsCount"`       //Кол-во шагов, доступное в задании
-	CompletedSteps      []UserCompletedSteps `json:"CompletedSteps"`      //Выполненные шаги пользователем
-}
-type UserCompletedSteps struct {
-	StepName      string `json:"StepName"`      //Имя выполненного шага
-	Count         int    `json:"Count"`         //Кол-во выполнений шага
-	UserBonusStep int    `json:"UserBonusStep"` //Бонус пользователя за выполнение шага
+func HttpResponseObject(w http.ResponseWriter, status int, text []byte) {
+	w.WriteHeader(status)
+	w.Write(text)
 }
 
-// ExicuteCountSumQuery Обертка, которая предназначена для запросов, которые возвращают одно целое значение
-func ExicuteCountSumQuery(storage *Storage, queryText string) int {
-	result := 0
-	query := storage.DB.NewQuery(queryText)
-	rows, err := query.Rows()
-	if err != nil {
-		return result
-	}
-	for rows.Next() {
-		rows.Scan(&result)
-	}
-	return result
-}
+//endregion Системные методы
 
 //TODO нужен еще запрос, которые показывает вообще все задания и шаги
